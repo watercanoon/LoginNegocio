@@ -50,4 +50,16 @@ public class WebController {
         productoService.eliminar(id);
         return "redirect:/dashboard";
     }
+
+    // --- NUEVO METODO PARA EDITAR ---
+    @GetMapping("/productos/editar/{id}")
+    public String editarProducto(@PathVariable Integer id, Model model) {
+        model.addAttribute("productos", productoService.listarTodos());
+
+        // Buscamos el producto y lo enviamos al formulario
+        Producto productoExistente = productoService.buscarPorId(id);
+        model.addAttribute("nuevoProducto", productoExistente != null ? productoExistente : new Producto());
+
+        return "dashboard";
+    }
 }

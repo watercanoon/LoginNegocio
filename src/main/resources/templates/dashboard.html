@@ -6,65 +6,123 @@
     <link rel="stylesheet" th:href="@{/css/cs/dashboard.css}">
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <style>
+        /* Pequeños ajustes visuales para que se vea profesional sin tocar tu CSS original */
+        .action-btn { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; text-decoration: none; display: inline-block; font-size: 0.9em; }
+        .btn-edit { background-color: #f59e0b; color: white; }
+        .btn-edit:hover { background-color: #d97706; }
+        .btn-del { background-color: #ef4444; color: white; }
+        .btn-del:hover { background-color: #dc2626; }
+        .btn-in { background-color: #3b82f6; color: white; }
+        .btn-in:hover { background-color: #2563eb; }
+        .btn-out { background-color: #6366f1; color: white; }
+        .btn-out:hover { background-color: #4f46e5; }
+        .form-section { background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        .table-container { background: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #e2e8f0; margin-top: 20px;}
+    </style>
 </head>
 <body>
 <div class="container">
-    <header>
-        <h1>Gestión de Inventario - Tienda Perez Romero</h1>
-        <a th:href="@{/login}" class="btn-logout">Salir</a>
+    <header style="margin-bottom: 30px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+        <h1 style="color: #1e293b; margin: 0;">📦 Gestión de Inventario - Tienda Perez Romero</h1>
+        <a th:href="@{/login}" class="btn-logout" style="color: #ef4444; font-weight: bold; text-decoration: none;">Cerrar Sesión 🚪</a>
     </header>
 
     <section class="form-section">
-        <h3>Registrar Nuevo Producto</h3>
-        <form th:action="@{/productos/guardar}" th:object="${nuevoProducto}" method="post">
-            <input type="text" th:field="*{nombProd}" placeholder="Nombre del producto" required>
-            <input type="number" step="0.01" th:field="*{precioProd}" placeholder="Precio (S/)" required>
-            <button type="submit" class="btn-save">Registrar</button>
+        <h3 th:text="${nuevoProducto.codiProd != null ? '✏️ Modificar Producto Existente' : '✨ Registrar Nuevo Producto'}" style="margin-top: 0; color: #334155;"></h3>
+
+        <form th:action="@{/productos/guardar}" th:object="${nuevoProducto}" method="post" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+
+            <input type="hidden" th:field="*{codiProd}">
+            <input type="hidden" th:field="*{stock}">
+
+            <div style="flex: 1; min-width: 200px;">
+                <label style="font-size: 0.85em; color: #64748b; font-weight: bold;">Nombre del Producto</label>
+                <input type="text" th:field="*{nombProd}" placeholder="Ej: Arroz Costeño 5kg" required style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+            </div>
+
+            <div style="width: 150px;">
+                <label style="font-size: 0.85em; color: #64748b; font-weight: bold;">Precio (S/)</label>
+                <input type="number" step="0.01" th:field="*{precioProd}" placeholder="0.00" required style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+            </div>
+
+            <div style="margin-top: 18px;">
+                <button type="submit" class="btn-save" th:text="${nuevoProducto.codiProd != null ? '💾 Guardar Cambios' : '➕ Registrar'}" style="background-color: #10b981; color: white; padding: 10px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;"></button>
+                <a th:if="${nuevoProducto.codiProd != null}" th:href="@{/dashboard}" style="margin-left: 10px; color: #64748b; text-decoration: underline; font-weight: 500;">Cancelar</a>
+            </div>
         </form>
     </section>
 
-    <section class="table-section">
-        <table>
-            <thead>
+    <div class="table-container">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
             <tr>
-                <th>ID</th>
-                <th>Producto</th>
-                <th>Precio</th>
-                <th>Stock Actual</th>
-                <th>Operaciones de Kardex</th>
+                <th style="padding: 15px; text-align: left; color: #475569;">ID</th>
+                <th style="padding: 15px; text-align: left; color: #475569;">Producto</th>
+                <th style="padding: 15px; text-align: left; color: #475569;">Precio</th>
+                <th style="padding: 15px; text-align: center; color: #475569;">Stock</th>
+                <th style="padding: 15px; text-align: center; color: #475569;">Operaciones de Kardex</th>
+                <th style="padding: 15px; text-align: center; color: #475569;">Acciones</th>
             </tr>
             </thead>
             <tbody>
-            <tr th:each="prod : ${productos}" th:id="'prod-row-' + ${prod.codiProd}">
-                <td th:text="${prod.codiProd}"></td>
-                <td th:text="${prod.nombProd}"></td>
-                <td th:text="'S/ ' + ${prod.precioProd}"></td>
-                <td class="stock-val" th:text="${prod.stock != null ? prod.stock : 0}">0</td>
-                <td>
-                    <button class="btn-mov in" th:onclick="'abrirMovimiento(' + ${prod.codiProd} + ', 1)'">Entrada</button>
-                    <button class="btn-mov out" th:onclick="'abrirMovimiento(' + ${prod.codiProd} + ', 0)'">Salida</button>
-                    <a th:href="@{'/productos/eliminar/' + ${prod.codiProd}}" class="btn-delete" onclick="return confirm('¿Eliminar producto?')">🗑️</a>
+            <tr th:each="prod : ${productos}" th:id="'prod-row-' + ${prod.codiProd}" style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 15px; color: #64748b;" th:text="${prod.codiProd}"></td>
+                <td style="padding: 15px; font-weight: 600; color: #1e293b;" th:text="${prod.nombProd}"></td>
+                <td style="padding: 15px; color: #059669; font-weight: 500;" th:text="'S/ ' + ${prod.precioProd}"></td>
+                <td class="stock-val" style="padding: 15px; text-align: center; font-size: 1.1em; font-weight: bold; color: #0f172a;" th:text="${prod.stock != null ? prod.stock : 0}">0</td>
+
+                <td style="padding: 15px; text-align: center;">
+                    <button class="action-btn btn-in" th:onclick="'abrirMovimiento(' + ${prod.codiProd} + ', 1)'" title="Ingresar Stock">📥 Entrada</button>
+                    <button class="action-btn btn-out" th:onclick="'abrirMovimiento(' + ${prod.codiProd} + ', 0)'" title="Retirar Stock">📤 Salida</button>
                 </td>
+                <td style="padding: 15px; text-align: center;">
+                    <a th:href="@{'/productos/editar/' + ${prod.codiProd}}" class="action-btn btn-edit">✏️ Editar</a>
+                    <a th:href="@{'/productos/eliminar/' + ${prod.codiProd}}" class="action-btn btn-del" onclick="return confirm('¿Estás seguro de eliminar este producto definitivamente?')">🗑️ Eliminar</a>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(productos)}">
+                <td colspan="6" style="text-align: center; padding: 30px; color: #94a3b8;">No hay productos registrados. ¡Agrega el primero arriba!</td>
             </tr>
             </tbody>
         </table>
-    </section>
+    </div>
 </div>
 
 <div id="notification-area"></div>
 
-<div id="modalMovimiento" class="modal" style="display:none;">
-<div id="modalMovimiento" class="modal" style="display:none;">
-    <div class="modal-content">
-        <h4 id="modalTitle">Movimiento de Kardex</h4>
+<div id="modalMovimiento" class="modal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; width: 320px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+        <h3 id="modalTitle" style="margin-top: 0; color: #1e293b; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px;">Movimiento</h3>
+
         <input type="hidden" id="movProdId">
         <input type="hidden" id="movTipo">
-        <input type="number" id="movCantidad" placeholder="Cantidad" min="1">
-        <button onclick="ejecutarMovimiento()" class="btn-save">Confirmar</button>
-        <button onclick="document.getElementById('modalMovimiento').style.display='none'">Cancelar</button>
+
+        <div style="margin: 25px 0;">
+            <label style="display: block; font-size: 0.9em; color: #475569; font-weight: bold; margin-bottom: 8px;">Cantidad:</label>
+            <input type="number" id="movCantidad" placeholder="Ej. 10" min="1" style="width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 1.1em;">
+        </div>
+
+        <div style="display: flex; justify-content: space-between; gap: 10px;">
+            <button onclick="document.getElementById('modalMovimiento').style.display='none'" style="flex: 1; padding: 10px; background: #f1f5f9; color: #475569; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Cancelar</button>
+            <button onclick="ejecutarMovimiento()" style="flex: 1; padding: 10px; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Confirmar</button>
+        </div>
     </div>
 </div>
 
 <script th:src="@{/css/js/dashboard.js}"></script>
+
+<script>
+    // Asegurar que el modal se muestre en el centro usando Flexbox
+    const abrirOriginal = window.abrirMovimiento;
+    window.abrirMovimiento = function(id, tipo) {
+        document.getElementById('movProdId').value = id;
+        document.getElementById('movTipo').value = tipo;
+        document.getElementById('modalTitle').innerHTML = (tipo === 1 ? "📥 Registrar Entrada" : "📤 Registrar Salida");
+        document.getElementById('modalMovimiento').style.display = 'block'; // Fallback
+        setTimeout(() => document.getElementById('modalMovimiento').style.display = 'flex', 10);
+    };
+</script>
 </body>
 </html>
