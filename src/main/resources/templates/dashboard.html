@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Control - Inventario</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Gestión de Productos</h1>
+        <a th:href="@{/login}" class="btn-logout">Salir</a>
+    </header>
+
+    <section class="form-section">
+        <h3>Nuevo Producto</h3>
+        <form th:action="@{/productos/guardar}" th:object="${nuevoProducto}" method="post">
+            <input type="text" th:field="*{nombProd}" placeholder="Nombre del producto" required>
+            <input type="number" step="0.01" th:field="*{precioProd}" placeholder="Precio (S/)" required>
+            <button type="submit" class="btn-save">Registrar</button>
+        </form>
+    </section>
+
+    <section class="table-section">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Producto</th>
+                <th>Precio</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="prod : ${productos}">
+                <td th:text="${prod.codiProd}"></td>
+                <td th:text="${prod.nombProd}"></td>
+                <td th:text="'S/ ' + ${prod.precioProd}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</div>
+
+<div id="notification-area"></div>
+
+<script th:src="@{/js/dashboard.js}"></script>
+</body>
+</html>
