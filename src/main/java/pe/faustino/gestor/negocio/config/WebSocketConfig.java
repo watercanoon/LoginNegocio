@@ -12,7 +12,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws-notificaciones").withSockJS();
+        registry.addEndpoint("/ws-notificaciones")
+                .setAllowedOriginPatterns("*") // <--- ESTO SOLUCIONA EL ERROR 403
+                .withSockJS();
     }
 
     @Override

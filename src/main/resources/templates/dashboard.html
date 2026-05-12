@@ -114,14 +114,37 @@
 <script th:src="@{/css/js/dashboard.js}"></script>
 
 <script>
-    // Asegurar que el modal se muestre en el centro usando Flexbox
-    const abrirOriginal = window.abrirMovimiento;
+    // 1. Mostrar el modal centrado
     window.abrirMovimiento = function(id, tipo) {
         document.getElementById('movProdId').value = id;
         document.getElementById('movTipo').value = tipo;
         document.getElementById('modalTitle').innerHTML = (tipo === 1 ? "📥 Registrar Entrada" : "📤 Registrar Salida");
-        document.getElementById('modalMovimiento').style.display = 'block'; // Fallback
-        setTimeout(() => document.getElementById('modalMovimiento').style.display = 'flex', 10);
+        document.getElementById('modalMovimiento').style.display = 'flex';
+    };
+
+    // 2. Ejecutar la operación (Soluciona el error ReferenceError)
+    window.ejecutarMovimiento = function() {
+        const id = document.getElementById('movProdId').value;
+        const tipo = document.getElementById('movTipo').value;
+        const cant = document.getElementById('movCantidad').value;
+
+        if(!cant || cant <= 0) {
+            alert("Por favor, ingrese una cantidad válida.");
+            return;
+        }
+
+        fetch(`/api/kardex/registrar?codiProd=${id}&cantidad=${cant}&tipo=${tipo}`, { method: 'POST' })
+            .then(res => {
+                if (res.ok) {
+                    document.getElementById('modalMovimiento').style.display = 'none';
+                    document.getElementById('movCantidad').value = "";
+                    // Notificación local de respaldo
+                    console.log("Movimiento registrado exitosamente");
+                } else {
+                    res.text().then(text => alert("Error al registrar: " + text));
+                }
+            })
+            .catch(error => console.error("Error en la petición:", error));
     };
 </script>
 </body>
