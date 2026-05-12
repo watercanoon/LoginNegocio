@@ -45,4 +45,9 @@ public class WebController {
         productoService.guardarProducto(producto);
         return "redirect:/dashboard";
     }
+    @GetMapping("/productos/eliminar/{id}")
+    public String eliminarProducto(@PathVariable Integer id) {
+        productoService.eliminar(id);
+        return "redirect:/dashboard";
+    }
 }

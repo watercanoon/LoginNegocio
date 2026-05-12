@@ -24,4 +24,7 @@ public class Producto {
     // Cambiamos Double por BigDecimal para que soporte precision y scale correctamente
     @Column(name = "precioProd", nullable = false, precision = 10, scale = 2)
     private BigDecimal precioProd;
+
+    @Column(name = "stock")
+    private Integer stock = 0;
 }

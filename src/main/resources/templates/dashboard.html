@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <title>Panel de Control - Inventario</title>
-    <link rel="stylesheet" th:href="@{/css/cs/dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 </head>
 <body>
 <div class="container">
     <header>
-        <h1>Gestión de Productos</h1>
+        <h1>Gestión de Inventario - Tienda Perez Romero</h1>
         <a th:href="@{/login}" class="btn-logout">Salir</a>
     </header>
 
     <section class="form-section">
-        <h3>Nuevo Producto</h3>
+        <h3>Registrar Nuevo Producto</h3>
         <form th:action="@{/productos/guardar}" th:object="${nuevoProducto}" method="post">
             <input type="text" th:field="*{nombProd}" placeholder="Nombre del producto" required>
             <input type="number" step="0.01" th:field="*{precioProd}" placeholder="Precio (S/)" required>
@@ -30,13 +30,21 @@
                 <th>ID</th>
                 <th>Producto</th>
                 <th>Precio</th>
+                <th>Stock Actual</th>
+                <th>Operaciones de Kardex</th>
             </tr>
             </thead>
             <tbody>
-            <tr th:each="prod : ${productos}">
+            <tr th:each="prod : ${productos}" th:id="'prod-row-' + ${prod.codiProd}">
                 <td th:text="${prod.codiProd}"></td>
                 <td th:text="${prod.nombProd}"></td>
                 <td th:text="'S/ ' + ${prod.precioProd}"></td>
+                <td class="stock-val" th:text="${prod.stock != null ? prod.stock : 0}">0</td>
+                <td>
+                    <button class="btn-mov in" th:onclick="'abrirMovimiento(' + ${prod.codiProd} + ', 1)'">Entrada</button>
+                    <button class="btn-mov out" th:onclick="'abrirMovimiento(' + ${prod.codiProd} + ', 0)'">Salida</button>
+                    <a th:href="@{'/productos/eliminar/' + ${prod.codiProd}}" class="btn-delete" onclick="return confirm('¿Eliminar producto?')">🗑️</a>
+                </td>
             </tr>
             </tbody>
         </table>
@@ -45,6 +53,17 @@
 
 <div id="notification-area"></div>
 
-<script th:src="@{/css/js/dashboard.js}"></script>
+<div id="modalMovimiento" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h4 id="modalTitle">Movimiento de Kardex</h4>
+        <input type="hidden" id="movProdId">
+        <input type="hidden" id="movTipo">
+        <input type="number" id="movCantidad" placeholder="Cantidad" min="1">
+        <button onclick="ejecutarMovimiento()" class="btn-save">Confirmar</button>
+        <button onclick="document.getElementById('modalMovimiento').style.display='none'">Cancelar</button>
+    </div>
+</div>
+
+<script th:src="@{/js/dashboard.js}"></script>
 </body>
 </html>
